@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jelajah Nusantara — Game Interaktif Pulau Indonesia</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: rgba(255,255,255,0.08);
+  --accent: #f0a500;
+  --accent2: #3ecf8e;
+  --accent3: #7c6af7;
+  --text: #f0ece3;
+  --muted: #8a95a8;
+  --danger: #e05c5c;
+  --success: #3ecf8e;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== BACKGROUND ===== */
+.bg-pattern {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(124,106,247,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(62,207,142,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 30% at 50% 50%, rgba(240,165,0,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.wave-lines {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 200'%3E%3Cpath fill='rgba(62,207,142,0.03)' d='M0,100 C360,150 720,50 1080,100 C1260,125 1350,90 1440,100 L1440,200 L0,200 Z'/%3E%3C/svg%3E") no-repeat bottom;
+  pointer-events: none;
+}
+
+/* ===== LAYOUT ===== */
+.shell {
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+}
+
+/* ===== HEADER ===== */
+header {
+  text-align: center;
+  padding: 3rem 0 2rem;
+  position: relative;
+}
+
+.header-badge {
+  display: inline-block;
+  background: rgba(240,165,0,0.12);
+  border: 1px solid rgba(240,165,0,0.25);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 20px;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--text);
+  margin-bottom: .5rem;
+}
+
+h1 span {
+  color: var(--accent);
+  font-style: italic;
+}
+
+.header-sub {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 300;
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ===== NAV TABS ===== */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 2rem 0 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+}
+
+.tab {
+  flex: 1;
+  padding: 11px 8px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all .25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+.tab.active {
+  background: var(--surface2);
+  color: var(--accent);
+  border: 1px solid rgba(240,165,0,0.2);
+}
+
+.tab-icon { font-size: 16px; }
+
+/* ===== SCORE BAR ===== */
+.score-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.score-pill {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 20px;
+  text-align: center;
+  flex: 1;
+}
+
+.score-pill .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+.score-pill .val { font-size: 22px; font-weight: 600; color: var(--text); }
+
+/* ===== GAME AREAS ===== */
+.game-area { display: none; }
+.game-area.active { display: block; animation: fadeUp .35s ease; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== PROGRESS ===== */
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.progress-track {
+  flex: 1;
+  height: 5px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent3), var(--accent));
+  border-radius: 3px;
+  transition: width .4s cubic-bezier(.4,0,.2,1);
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ===== QUESTION CARD ===== */
+.q-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.q-number {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: .75rem;
+}
+
+.q-text {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.opt-btn {
+  padding: 13px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+  transition: all .2s;
+  line-height: 1.4;
+}
+
+.opt-btn:hover:not(:disabled) {
+  border-color: rgba(240,165,0,0.4);
+  background: rgba(240,165,0,0.06);
+  color: var(--accent);
+}
+
+.opt-btn.correct {
+  background: rgba(62,207,142,0.1);
+  border-color: rgba(62,207,142,0.4);
+  color: var(--success);
+}
+
+.opt-btn.wrong {
+  background: rgba(224,92,92,0.1);
+  border-color: rgba(224,92,92,0.4);
+  color: var(--danger);
+}
+
+.opt-btn:disabled { cursor: default; }
+
+/* ===== FEEDBACK ===== */
+.feedback {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  margin: .75rem 0;
+  display: none;
+}
+
+.feedback.correct { background: rgba(62,207,142,0.1); border: 1px solid rgba(62,207,142,0.25); color: var(--success); display: block; }
+.feedback.wrong { background: rgba(224,92,92,0.1); border: 1px solid rgba(224,92,92,0.25); color: var(--danger); display: block; }
+
+/* ===== NEXT BUTTON ===== */
+.btn-next {
+  background: var(--accent);
+  color: #0a0e1a;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  display: none;
+}
+
+.btn-next:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(240,165,0,0.3); }
+.btn-next.show { display: inline-block; }
+
+.btn-reset {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid rgba(240,165,0,0.35);
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  margin-top: 1rem;
+}
+.btn-reset:hover { background: rgba(240,165,0,0.08); }
+
+/* ===== RESULT ===== */
+.result-box {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.result-trophy {
+  font-size: 56px;
+  margin-bottom: 1rem;
+  animation: bounce .6s ease;
+}
+
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.result-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: .5rem;
+  color: var(--accent);
+}
+
+.result-sub { color: var(--muted); font-size: 15px; margin-bottom: 1.5rem; line-height: 1.6; }
+
+/* ===== GAME 2: MATCH ===== */
+.match-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.match-col-label {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.match-item {
+  padding: 11px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--text);
+  margin-bottom: 8px;
+  transition: all .2s;
+  line-height: 1.45;
+  user-select: none;
+}
+
+.match-item:hover { border-color: rgba(124,106,247,0.4); background: rgba(124,106,247,0.06); }
+.match-item.selected { border-color: var(--accent3); background: rgba(124,106,247,0.12); color: #c4bdff; }
+.match-item.matched { border-color: rgba(62,207,142,0.4); background: rgba(62,207,142,0.08); color: var(--success); cursor: default; }
+.match-item.error { border-color: rgba(224,92,92,0.4); background: rgba(224,92,92,0.08); animation: shake .4s; }
+
+@keyframes shake {
+  0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}
+}
+
+/* ===== GAME 3: CLUE ===== */
+.clue-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.75rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+.clue-label {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent3);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.clue-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  animation: slideIn .3s ease;
+}
+
+.clue-item:last-child { border-bottom: none; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.clue-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(124,106,247,0.15);
+  border: 1px solid rgba(124,106,247,0.3);
+  color: #c4bdff;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.clue-text { font-size: 15px; color: var(--text); line-height: 1.6; }
+
+.btn-more-clue {
+  background: rgba(124,106,247,0.1);
+  border: 1px solid rgba(124,106,247,0.25);
+  color: #c4bdff;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all .2s;
+}
+
+.btn-more-clue:hover { background: rgba(124,106,247,0.2); }
+
+.bonus-badge {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: rgba(240,165,0,0.12);
+  border: 1px solid rgba(240,165,0,0.25);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.islands-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.island-btn {
+  padding: 12px 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all .2s;
+}
+
+.island-btn:hover:not(:disabled) {
+  border-color: rgba(240,165,0,0.4);
+  color: var(--accent);
+  background: rgba(240,165,0,0.06);
+}
+
+.island-btn.correct {
+  background: rgba(62,207,142,0.1);
+  border-color: rgba(62,207,142,0.4);
+  color: var(--success);
+}
+
+.island-btn.wrong {
+  background: rgba(224,92,92,0.1);
+  border-color: rgba(224,92,92,0.4);
+  color: var(--danger);
+}
+
+.island-btn:disabled { cursor: default; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 580px) {
+  .options { grid-template-columns: 1fr; }
+  .islands-grid { grid-template-columns: repeat(3,1fr); }
+  .tab span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+<div class="wave-lines"></div>
+
+<div class="shell">
+
+  <header>
+    <div class="header-badge">✦ Geografi Indonesia</div>
+    <h1>Jelajah <span>Nusantara</span></h1>
+    <p class="header-sub">Petualangan belajar tentang pulau-pulau besar Indonesia lewat 3 game seru!</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchGame(1)">
+      <span class="tab-icon">🎯</span>
+      <span>Kuis Cepat</span>
+    </button>
+    <button class="tab" onclick="switchGame(2)">
+      <span class="tab-icon">🔗</span>
+      <span>Jodohkan</span>
+    </button>
+    <button class="tab" onclick="switchGame(3)">
+      <span class="tab-icon">🔍</span>
+      <span>Tebak Pulau</span>
+    </button>
+  </div>
+
+  <!-- ============ GAME 1 ============ -->
+  <div id="game1" class="game-area active">
+    <div class="score-bar">
+      <div class="score-pill"><div class="label">Skor</div><div class="val" id="g1-score">0</div></div>
+      <div class="score-pill"><div class="label">✓ Benar</div><div class="val" id="g1-correct" style="color:var(--success)">0</div></div>
+      <div class="score-pill"><div class="label">✗ Salah</div><div class="val" id="g1-wrong" style="color:var(--danger)">0</div></div>
+    </div>
+    <div id="g1-content"></div>
+  </div>
+
+  <!-- ============ GAME 2 ============ -->
+  <div id="game2" class="game-area">
+    <div class="score-bar">
+      <div class="score-pill"><div class="label">Pasangan Benar</div><div class="val"><span id="g2-matched">0</span> / 7</div></div>
+    </div>
+    <div id="g2-content"></div>
+  </div>
+
+  <!-- ============ GAME 3 ============ -->
+  <div id="game3" class="game-area">
+    <div class="score-bar">
+      <div class="score-pill"><div class="label">Skor</div><div class="val" id="g3-score">0</div></div>
+      <div class="score-pill"><div class="label">Putaran</div><div class="val"><span id="g3-round">1</span> / 7</div></div>
+      <div class="score-pill"><div class="label">Bonus Maks</div><div class="val" style="color:var(--accent)">+4</div></div>
+    </div>
+    <div id="g3-content"></div>
+  </div>
+
+</div>
+
+<script>
+// ===== DATA =====
+const islands = [
+  {name:"Sumatra", facts:["Terletak di barat Indonesia, diapit Samudra Hindia dan Selat Malaka","Posisi astronomis: 6° LU–6° LS dan 95° BT–105° BT","Bukit Barisan membentang di sisi baratnya","Berada di zona Cincin Api Pasifik","Dikenal kaya satwa langka, terutama harimau Sumatra"]},
+  {name:"Jawa", facts:["Berbatasan dengan Laut Jawa di utara dan Samudra Hindia di selatan","Luas sekitar 126.700 km²","Pulau paling padat penduduknya di Indonesia","Pusat pemerintahan, ekonomi, dan budaya Indonesia","Berbatasan dengan Selat Sunda di barat dan Selat Bali di timur"]},
+  {name:"Kalimantan", facts:["Di utara Pulau Jawa, dikelilingi Selat Karimata, Selat Makassar, dan Laut Jawa","Posisi astronomis: 7° LU sampai 4° LS dan 108° BT sampai 119° BT","Dilalui oleh garis ekuator","Dijuluki 'Pulau Seribu Sungai'","Hutan hujan tropis luas dan menjadi rumah bagi orangutan"]},
+  {name:"Sulawesi", facts:["Terletak di sebelah timur Kalimantan dan barat Kepulauan Maluku","Bentuk pulau sangat khas bercabang-cabang dengan empat semenanjung","Dipisahkan oleh Teluk Tomini, Teluk Bone, dan Teluk Tolo","Fauna endemik: anoa, babirusa, dan tarsius","Memiliki situs prasejarah penting dan budaya Toraja"]},
+  {name:"Nusa Tenggara", facts:["Rangkaian pulau di sebelah timur Jawa","Meliputi Bali, Lombok, Sumbawa, Flores, Sumba, hingga Timor","Berbatasan dengan Laut Flores di utara dan Samudra Hindia di selatan","Berbatasan dengan Timor Leste di bagian timur NTT","Terkenal dengan Komodo dan pulau wisata populer"]},
+  {name:"Maluku", facts:["Terletak di timur Indonesia, antara Sulawesi dan Papua","Berbatasan dengan Laut Seram dan Laut Arafuru","Terdiri dari banyak pulau kecil","Sejak lama dikenal sebagai wilayah rempah-rempah dunia","Terkenal dengan komoditas pala dan cengkih"]},
+  {name:"Papua", facts:["Pulau terbesar di Indonesia, terletak paling timur","Merupakan bagian barat pulau New Guinea","Memiliki bentang alam beragam: dataran rendah berawa hingga pegunungan tinggi","Terkenal dengan burung cenderawasih","Memiliki Puncak Jayawijaya, puncak tertinggi di Indonesia"]}
+];
+
+const questions = [
+  {q:"Pulau apa yang dijuluki 'Pulau Seribu Sungai' dan dilalui garis ekuator?",opts:["Sumatra","Papua","Kalimantan","Jawa"],ans:2},
+  {q:"Pulau mana yang memiliki luas ± 126.700 km² dan menjadi pusat pemerintahan Indonesia?",opts:["Kalimantan","Jawa","Sulawesi","Sumatra"],ans:1},
+  {q:"Fauna endemik berikut yang BUKAN dari Sulawesi adalah...",opts:["Anoa","Babirusa","Tarsius","Orangutan"],ans:3},
+  {q:"Bukit Barisan yang terkenal membentang di sisi barat pulau mana?",opts:["Kalimantan","Jawa","Papua","Sumatra"],ans:3},
+  {q:"Pulau Komodo termasuk wilayah kepulauan mana?",opts:["Maluku","Sulawesi","Nusa Tenggara","Papua"],ans:2},
+  {q:"Komoditas rempah-rempah pala dan cengkih yang terkenal hingga mancanegara berasal dari mana?",opts:["Nusa Tenggara","Kalimantan","Sulawesi","Maluku"],ans:3},
+  {q:"Puncak Jayawijaya berada di pulau mana?",opts:["Kalimantan","Sulawesi","Papua","Maluku"],ans:2},
+  {q:"Pulau mana yang berada di antara Samudra Hindia dan Selat Malaka?",opts:["Jawa","Sumatra","Nusa Tenggara","Kalimantan"],ans:1},
+  {q:"Pulau manakah yang memiliki bentuk bercabang-cabang dengan empat semenanjung besar?",opts:["Papua","Kalimantan","Sulawesi","Nusa Tenggara"],ans:2},
+  {q:"Burung cenderawasih adalah fauna ikonik dari pulau mana?",opts:["Maluku","Sulawesi","Nusa Tenggara","Papua"],ans:3}
+];
+
+const matchPairs = [
+  {island:"Sumatra",fact:"Habitat harimau Sumatra & Bukit Barisan"},
+  {island:"Jawa",fact:"Pusat pemerintahan, pulau terpadat di Indonesia"},
+  {island:"Kalimantan",fact:"Pulau Seribu Sungai, rumah orangutan"},
+  {island:"Sulawesi",fact:"Budaya Toraja & fauna endemik anoa"},
+  {island:"Nusa Tenggara",fact:"Destinasi wisata Komodo & Lombok"},
+  {island:"Maluku",fact:"Kerajaan rempah: pala & cengkih"},
+  {island:"Papua",fact:"Pulau terbesar, Puncak Jayawijaya & cenderawasih"}
+];
+
+const clues = [
+  {island:"Kalimantan",clues:["Pulau ini dilalui oleh garis khatulistiwa secara langsung","Terkenal dengan julukan 'Pulau Seribu Sungai'","Memiliki hutan hujan tropis yang sangat lebat","Primata ikonnya adalah orangutan berbulu cokelat kemerahan"]},
+  {island:"Sumatra",clues:["Letaknya paling barat di antara pulau-pulau besar Indonesia","Pegunungan Bukit Barisan membentang di sisi baratnya","Diapit antara Samudra Hindia dan Selat Malaka","Harimau bergaris hitam-oranye menjadi simbol pulau ini"]},
+  {island:"Papua",clues:["Merupakan pulau terbesar dalam wilayah Indonesia","Terletak paling timur dari seluruh kepulauan Indonesia","Puncak tertingginya dikenal sebagai Jayawijaya","Burung berbulu spektakuler bernama cenderawasih tinggal di sini"]},
+  {island:"Sulawesi",clues:["Bentuknya sangat unik, seperti huruf K yang bercabang-cabang","Memiliki empat semenanjung besar yang menjorok ke laut","Terkenal dengan kearifan budaya suku Toraja","Hewan endemiknya termasuk anoa, babirusa, dan tarsius"]},
+  {island:"Jawa",clues:["Pulau ini menjadi pusat pemerintahan Republik Indonesia","Merupakan pulau dengan kepadatan penduduk tertinggi di Indonesia","Luasnya sekitar 126.700 km² saja, namun sangat berpengaruh","Berbatasan dengan Samudra Hindia di sisi selatannya"]},
+  {island:"Maluku",clues:["Wilayah ini sudah masyhur sejak era perdagangan kuno dunia","Menjadi penghasil utama rempah pala dan cengkih","Letaknya di antara Sulawesi di barat dan Papua di timur","Terdiri dari gugusan banyak pulau-pulau kecil di perairan timur"]},
+  {island:"Nusa Tenggara",clues:["Merupakan rangkaian pulau di sebelah timur Pulau Jawa","Mencakup pulau-pulau seperti Bali, Lombok, Flores, dan Sumba","Menjadi habitat hewan kadal raksasa yang terkenal di dunia","Berbatasan langsung dengan negara Timor Leste di bagian timur"]}
+];
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-.5);}
+
+// ===== GAME 1 =====
+let g1={idx:0,score:0,correct:0,wrong:0,done:false};
+
+function renderG1(){
+  const d=document.getElementById('g1-content');
+  if(g1.idx>=questions.length){
+    const pct=Math.round(g1.correct/questions.length*100);
+    const emoji=pct>=80?"🏆":pct>=60?"🎉":"📚";
+    const msg=pct>=80?"Luar biasa! Kamu ahli Nusantara!":pct>=60?"Bagus! Terus tingkatkan!":"Jangan menyerah, baca lagi materinya!";
+    d.innerHTML=`<div class="result-box">
+      <div class="result-trophy">${emoji}</div>
+      <div class="result-title">Skor Akhir: ${g1.score}</div>
+      <div class="result-sub">${msg}<br>Benar ${g1.correct} dari ${questions.length} soal (${pct}%)</div>
+      <button class="btn-reset" onclick="resetG1()">↺ Main Lagi</button>
+    </div>`;
+    return;
+  }
+  const q=questions[g1.idx];
+  const pct=Math.round(g1.idx/questions.length*100);
+  d.innerHTML=`
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="g1-bar" style="width:${pct}%"></div></div>
+      <div class="progress-text">Soal ${g1.idx+1} / ${questions.length}</div>
+    </div>
+    <div class="q-card">
+      <div class="q-number">Pertanyaan ${g1.idx+1}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">
+        ${q.opts.map((o,i)=>`<button class="opt-btn" id="g1o${i}" onclick="ansG1(${i})">${o}</button>`).join('')}
+      </div>
+    </div>
+    <div class="feedback" id="g1-fb"></div>
+    <button class="btn-next" id="g1-next" onclick="nextG1()">Soal Berikutnya →</button>
+  `;
+}
+
+function ansG1(chosen){
+  const q=questions[g1.idx];
+  for(let i=0;i<q.opts.length;i++) document.getElementById('g1o'+i).disabled=true;
+  document.getElementById('g1o'+q.ans).classList.add('correct');
+  const fb=document.getElementById('g1-fb');
+  if(chosen===q.ans){
+    g1.correct++;g1.score+=10;
+    fb.textContent='✓ Benar! +10 poin';fb.className='feedback correct';
+  } else {
+    g1.wrong++;
+    document.getElementById('g1o'+chosen).classList.add('wrong');
+    fb.textContent=`✗ Salah. Jawaban yang benar: ${q.opts[q.ans]}`;fb.className='feedback wrong';
+  }
+  document.getElementById('g1-score').textContent=g1.score;
+  document.getElementById('g1-correct').textContent=g1.correct;
+  document.getElementById('g1-wrong').textContent=g1.wrong;
+  document.getElementById('g1-next').classList.add('show');
+}
+
+function nextG1(){g1.idx++;renderG1();}
+function resetG1(){g1={idx:0,score:0,correct:0,wrong:0};document.getElementById('g1-score').textContent=0;document.getElementById('g1-correct').textContent=0;document.getElementById('g1-wrong').textContent=0;renderG1();}
+
+// ===== GAME 2 =====
+let g2={sel:{left:null,right:null},matched:0,leftItems:[],rightItems:[]};
+
+function renderG2(){
+  const d=document.getElementById('g2-content');
+  g2.sel={left:null,right:null};g2.matched=0;
+  g2.leftItems=matchPairs.map(p=>p.island);
+  g2.rightItems=shuffle(matchPairs.map(p=>p.fact));
+  document.getElementById('g2-matched').textContent=0;
+  d.innerHTML=`
+    <div class="match-grid">
+      <div>
+        <div class="match-col-label">🏝 Pulau</div>
+        ${g2.leftItems.map((it,i)=>`<div class="match-item" id="ml${i}" onclick="selLeft(${i})">${it}</div>`).join('')}
+      </div>
+      <div>
+        <div class="match-col-label">💡 Fakta Unik</div>
+        ${g2.rightItems.map((it,i)=>`<div class="match-item" id="mr${i}" onclick="selRight(${i})">${it}</div>`).join('')}
+      </div>
+    </div>
+    <div class="feedback" id="g2-fb"></div>
+    <div id="g2-done"></div>
+  `;
+}
+
+function selLeft(i){
+  const el=document.getElementById('ml'+i);
+  if(el.classList.contains('matched'))return;
+  if(g2.sel.left===i){g2.sel.left=null;el.classList.remove('selected');return;}
+  if(g2.sel.left!==null)document.getElementById('ml'+g2.sel.left).classList.remove('selected');
+  g2.sel.left=i;el.classList.add('selected');
+  if(g2.sel.right!==null)checkG2();
+}
+
+function selRight(i){
+  const el=document.getElementById('mr'+i);
+  if(el.classList.contains('matched'))return;
+  if(g2.sel.right===i){g2.sel.right=null;el.classList.remove('selected');return;}
+  if(g2.sel.right!==null)document.getElementById('mr'+g2.sel.right).classList.remove('selected');
+  g2.sel.right=i;el.classList.add('selected');
+  if(g2.sel.left!==null)checkG2();
+}
+
+function checkG2(){
+  const li=g2.sel.left,ri=g2.sel.right;
+  const island=g2.leftItems[li],fact=g2.rightItems[ri];
+  const ok=matchPairs.find(p=>p.island===island&&p.fact===fact);
+  const lel=document.getElementById('ml'+li),rel=document.getElementById('mr'+ri);
+  const fb=document.getElementById('g2-fb');
+  if(ok){
+    lel.classList.remove('selected');rel.classList.remove('selected');
+    lel.classList.add('matched');rel.classList.add('matched');
+    g2.matched++;g2.sel={left:null,right:null};
+    document.getElementById('g2-matched').textContent=g2.matched;
+    fb.textContent=`✓ Cocok! ${island} ↔ fakta terpilih`;fb.className='feedback correct';
+    if(g2.matched===matchPairs.length){
+      setTimeout(()=>{
+        document.getElementById('g2-done').innerHTML=`<div class="result-box">
+          <div class="result-trophy">🎊</div>
+          <div class="result-title">Sempurna!</div>
+          <div class="result-sub">Kamu berhasil menjodohkan semua 7 pulau dengan fakta yang tepat!</div>
+          <button class="btn-reset" onclick="renderG2()">↺ Main Lagi</button>
+        </div>`;
+      },500);
+    }
+  } else {
+    lel.classList.add('error');rel.classList.add('error');
+    fb.textContent='✗ Belum cocok, coba pasangan lain!';fb.className='feedback wrong';
+    setTimeout(()=>{
+      lel.classList.remove('selected','error');rel.classList.remove('selected','error');
+      g2.sel={left:null,right:null};
+    },700);
+  }
+}
+
+// ===== GAME 3 =====
+let g3={round:0,clueIdx:0,score:0,shuffled:[],answered:false};
+
+function initG3(){
+  g3.shuffled=shuffle(clues);
+  g3.round=0;g3.score=0;
+  document.getElementById('g3-score').textContent=0;
+  renderG3();
+}
+
+function renderG3(){
+  const d=document.getElementById('g3-content');
+  if(g3.round>=g3.shuffled.length){
+    const pct=Math.round(g3.score/g3.shuffled.length*10);
+    const emoji=pct>=8?"🏆":pct>=5?"🎉":"📚";
+    d.innerHTML=`<div class="result-box">
+      <div class="result-trophy">${emoji}</div>
+      <div class="result-title">Skor Akhir: ${g3.score}</div>
+      <div class="result-sub">Kamu menyelesaikan semua 7 putaran!<br>Makin sedikit petunjuk → makin besar bonus poin.</div>
+      <button class="btn-reset" onclick="initG3()">↺ Main Lagi</button>
+    </div>`;
+    return;
+  }
+  const cur=g3.shuffled[g3.round];
+  g3.clueIdx=0;g3.answered=false;
+  document.getElementById('g3-round').textContent=g3.round+1;
+
+  d.innerHTML=`
+    <div class="clue-card" id="g3-clue-card">
+      <div class="clue-label">🔍 Petunjuk Siapa Aku?</div>
+      <div class="bonus-badge" id="g3-bonus">+${Math.max(1,4-g3.clueIdx)} poin</div>
+      <div id="clue-list">
+        <div class="clue-item">
+          <div class="clue-num">1</div>
+          <div class="clue-text">${cur.clues[0]}</div>
+        </div>
+      </div>
+      <div id="more-btn-wrap">
+        ${cur.clues.length>1?`<button class="btn-more-clue" onclick="showClue()">Tampilkan petunjuk selanjutnya</button>`:''}
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:.75rem;font-weight:500">Pilih pulaunya:</div>
+    <div class="islands-grid">
+      ${islands.map(isl=>`<button class="island-btn" id="ib-${isl.name}" onclick="ansG3('${isl.name}')">${isl.name}</button>`).join('')}
+    </div>
+    <div class="feedback" id="g3-fb"></div>
+    <button class="btn-next" id="g3-next" onclick="nextG3()">${g3.round<g3.shuffled.length-1?'Pulau Berikutnya →':'Lihat Hasil →'}</button>
+  `;
+}
+
+function showClue(){
+  const cur=g3.shuffled[g3.round];
+  g3.clueIdx++;
+  const list=document.getElementById('clue-list');
+  const item=document.createElement('div');
+  item.className='clue-item';
+  item.innerHTML=`<div class="clue-num">${g3.clueIdx+1}</div><div class="clue-text">${cur.clues[g3.clueIdx]}</div>`;
+  list.appendChild(item);
+  const bonus=Math.max(1,4-g3.clueIdx);
+  document.getElementById('g3-bonus').textContent=`+${bonus} poin`;
+  const mb=document.getElementById('more-btn-wrap');
+  if(g3.clueIdx<cur.clues.length-1){
+    mb.innerHTML=`<button class="btn-more-clue" onclick="showClue()">Tampilkan petunjuk selanjutnya</button>`;
+  } else {
+    mb.innerHTML='<span style="font-size:13px;color:var(--muted)">Semua petunjuk sudah ditampilkan</span>';
+  }
+}
+
+function ansG3(chosen){
+  if(g3.answered)return;
+  g3.answered=true;
+  const cur=g3.shuffled[g3.round];
+  islands.forEach(isl=>{const b=document.getElementById('ib-'+isl.name);if(b)b.disabled=true;});
+  const bonus=Math.max(1,4-g3.clueIdx);
+  const fb=document.getElementById('g3-fb');
+  document.getElementById('ib-'+cur.island).classList.add('correct');
+  if(chosen===cur.island){
+    g3.score+=bonus;
+    fb.textContent=`✓ Benar! ${cur.island} — kamu dapat +${bonus} poin!`;fb.className='feedback correct';
+  } else {
+    document.getElementById('ib-'+chosen).classList.add('wrong');
+    fb.textContent=`✗ Salah. Jawabannya adalah ${cur.island}.`;fb.className='feedback wrong';
+  }
+  document.getElementById('g3-score').textContent=g3.score;
+  document.getElementById('g3-next').classList.add('show');
+}
+
+function nextG3(){g3.round++;renderG3();}
+
+// ===== NAV =====
+function switchGame(n){
+  document.querySelectorAll('.game-area').forEach(el=>el.classList.remove('active'));
+  document.getElementById('game'+n).classList.add('active');
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===n-1));
+}
+
+// Init all
+renderG1();
+renderG2();
+initG3();
+</script>
+</body>
+</html>
